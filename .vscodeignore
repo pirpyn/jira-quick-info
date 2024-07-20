@@ -1,0 +1,11 @@
+.vscode/
+.gitlab-ci.yml
+.github/
+.git/
+.gitignore
+esbuild.js/
+out/
+tests/
+node_modules/
+package-lock.json
+*.vsix

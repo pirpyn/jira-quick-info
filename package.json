@@ -1,0 +1,78 @@
+{
+	"name": "jira-quick-info",
+	"displayName": "JIRA Quick Info",
+	"description": "Get JIRA's summary, status and owner in the status bar",
+	"version": "0.0.1",
+	"icon": "logo.png",
+	"publisher": "pierre-payen",
+	"author": {
+		"email": "payen.pierre@gmail.com",
+		"name": "Pierre Payen",
+		"url": "https://github.com/pirpyn"
+	},
+	"repository": "https://github.com/pirpyn/jira-quick-info",
+	"license": "AGPL-3.0-only",
+	"engines": {
+		"vscode": "^1.91.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"keywords": [
+		"jira"
+	],
+	"main": "./dist/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "jira-quick-info.changeIssue",
+				"title": "Jira Quick Info: change issue"
+			}
+		],
+		"configuration": {
+			"title": "jira-quick-info",
+			"properties": {
+				"jira-quick-info.url": {
+					"type": "string",
+					"scope": "resource",
+					"default": "https://change.me/jira",
+					"description": "the base URL where your instance of JIRA is"
+				},
+				"jira-quick-info.issue": {
+					"type": "string",
+					"scope": "resource",
+					"default": "",
+					"description": "the JIRA issue to show"
+				},
+				"jira-quick-info.tokenPath": {
+					"type": "string",
+					"scope": "resource",
+					"default": "/path/to/token",
+					"description": "a path to a file containing a personnal access token (PAT) to authenticate"
+				}
+			}
+		}
+	},
+	"scripts": {
+		"compile": "npm run check-types && node esbuild.js",
+		"check-types": "tsc --noEmit",
+		"watch": "npm-run-all -p watch:*",
+		"watch:esbuild": "node esbuild.js --watch",
+		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+		"vscode:prepublish": "npm run package",
+		"package": "npm run check-types && node esbuild.js --production"
+	},
+	"dependencies": {
+		"axios": "^1.7.2",
+		"jira2md": "^3.0.1",
+		"typescript": "^5.5.3"
+	},
+	"devDependencies": {
+		"@types/node": "^20.14.10",
+		"@types/vscode": "^1.91.0",
+		"esbuild": "^0.23.0"
+	}
+}

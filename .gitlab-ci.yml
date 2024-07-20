@@ -1,0 +1,44 @@
+stages:
+  - deploy
+  - release
+
+deploy:
+  stage: deploy
+  only:
+    - tags
+  image: node:lts
+  environment:
+    name: production
+  script:
+    - |
+      VSIX_NAME=$(node -p "require('./package.json').name")
+      VSIX_REPO=$(node -p "require('./package.json').repository")
+      npm config set proxy $CODE_PROXY
+      npm install -g @vscode/vsce
+      npm install -g typescript
+      npm install --package-lock-only
+      npm ci
+      cat > deploy.env << EOF
+      VSIX_VERSION=$(node -p "require('./package.json').version")
+      VSIX_NAME=$VSIX_NAME
+      VSIX_REPO=$VSIX_REPO
+      CI_JOB_ID=$CI_JOB_ID
+      EOF
+      vsce package --baseImagesUrl=${VSIX_REPO} --baseContentUrl=${VSIX_REPO}
+  artifacts:
+    paths:
+      - ./*.vsix
+    reports:
+      dotenv: deploy.env
+
+release:
+  dependencies:
+    - deploy
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+    - |
+      release-cli create --name "Release $CI_COMMIT_TAG" --tag-name $CI_COMMIT_TAG \
+        --assets-link "{\"name\":\"Extension\",\"url\":\"${VSIX_REPO}/-/jobs/${CI_JOB_ID}/artifacts/file/${VSIX_NAME}-${VSIX_VERSION}.vsix\"}"
+  rules:
+    - if: $CI_COMMIT_TAG
