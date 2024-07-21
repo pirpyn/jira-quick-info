@@ -70,6 +70,9 @@ function getApiToken(): string {
 
 async function fetchIssueDetails(key: string): Promise<any> {
 	const baseUrl = getConfigProperty('url');
+	if (key == 'ISSUE-1234') {
+		return undefined;
+	}
 	try {
 		const agent = new https.Agent({
 			rejectUnauthorized: false
@@ -91,24 +94,24 @@ async function fetchIssueDetails(key: string): Promise<any> {
 }
 
 function parseIssueDetails(key: string, fields: any): string {
+	if (key == "ISSUE-1234" ) {
+		return `ISSUE-1234 | Status | Issue title/summary ( Owner )`
+	}
 	if (fields === undefined) {
 		throw new Error(`Can't find issue ${key}. (Check your PAT, the URL or your issue number)`)
 	}
 
-	let msg = key;
-	msg += ' |'
+	let msg = `${key} |`;
+
+	if (fields.status !== undefined && fields.status.name as string)
+		msg += ` ${fields.status.name} |`;
+
 	if (fields.summary as string)
 		msg += ` ${fields.summary}`;
-	else
-		msg += 'Summary:None';
-	if (fields.status !== undefined && fields.status.name as string)
-		msg += `( ${fields.status.name}`;
-	else
-		msg += '( Status:unknown'
-	if (fields.assigne !== undefined && fields.assigne.displayName as string)
-		msg += ` ${fields.status.name})`;
-	else
-		msg += ' Assignee:Unassigned)'
+
+	if (fields.assignee !== undefined && fields.assignee.displayName as string)
+		msg += ` ( ${fields.assignee.displayName} )`;
+
 	return msg;
 }
 
@@ -116,7 +119,22 @@ function getTooltip(label:string, fields: any): vscode.MarkdownString {
 	const mdString = new vscode.MarkdownString();
 	const baseUrl = getConfigProperty('url');
 	mdString.appendMarkdown(`Click to open ${baseUrl}/browse/${label}\n\n`);
+	if (label == 'ISSUE-1234') {
+		mdString.appendMarkdown(`
+__2 comments, 3 attachments__\n
+---\n
+This is the issue description, being rendered as **markdown**\n
+It can span several lines, contains [url](https://some.where)
+* or items
+* or items too !
+		`);
+		return mdString;
+	}
 	if (fields !== undefined) {
+		const ncomments = (fields.comment.comments as Array<any>).length;
+		const nattach = (fields.attachment as Array<any>).length;
+		mdString.appendMarkdown(`__${ncomments} comments, ${nattach} attachments__\n\n`);
+		mdString.appendMarkdown('---\n\n');
 		mdString.appendMarkdown(j2m.to_markdown(fields.description));
 	}
 
@@ -197,7 +215,6 @@ export function activate(context: vscode.ExtensionContext) {
 	apiToken = getApiToken();
 	if (!apiToken) {
 		vscode.window.showErrorMessage('Unable to get API token.');
-		return;
 	}
 
 	if (myStatusBarItem == undefined) {

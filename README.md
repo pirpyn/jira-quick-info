@@ -7,11 +7,14 @@
 Small extension to display a Jira's summary, status and owner in the status bar.
 Clicking on it will open the issue webpage.
 
+![Example Image](example.png)
+
 ## Requirement
 You'll need to set up a Personnal Access Token to authenticate to Jira.
 Look for more information in your Jira's profile.
 
 # Changelog
 
-## [0.0.1] 2024-07-15
-- Initial release
+## [0.0.2] 2024-07-21
+- Added total number of attachments and comments on tooltip
+- Renderer a mockup with issue ISSUE-1234
