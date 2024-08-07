@@ -2,7 +2,7 @@
 	"name": "jira-quick-info",
 	"displayName": "JIRA Quick Info",
 	"description": "Get JIRA's summary, status and owner in the status bar",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"icon": "logo.png",
 	"publisher": "pierre-payen",
 	"author": {
@@ -30,6 +30,10 @@
 			{
 				"command": "jira-quick-info.changeIssue",
 				"title": "Jira Quick Info: change issue"
+			},
+			{
+				"command": "jira-quick-info.removeThumbnails",
+				"title": "Jira Quick Info: removes all thumbnails downloaded for the tooltip"
 			}
 		],
 		"configuration": {

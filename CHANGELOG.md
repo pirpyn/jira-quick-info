@@ -3,6 +3,10 @@ All notable changes to the "jira-quick-info" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.0.3] 2024-08-07
+- Download thumbnailed images to render them in the tooltip
+- Added a command to erase the thumbnails from the disk
+
 ## [0.0.2] 2024-07-21
 - Added total number of attachments and comments on tooltip
 - Renderer a mockup with issue ISSUE-1234

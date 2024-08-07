@@ -68,6 +68,51 @@ function getApiToken(): string {
 	return '';
 }
 
+async function getImage(url: string): Promise<any> {
+	try {
+		const agent = new https.Agent({
+			rejectUnauthorized: false
+		});
+		const response = await axios.get(url, {
+			httpsAgent: agent,
+			headers: { 'Authorization': `Bearer ${apiToken}` },
+			responseType: 'arraybuffer'
+		});
+		if (response.status !== 200) {
+			vscode.window.showErrorMessage(`Got error ${response.status} for ${url}`);
+			return undefined;
+		}
+		return response.data;
+	} catch (error) {
+		const apiTokenPath = path.resolve(getConfigProperty('tokenPath'));
+		vscode.window.showErrorMessage(`Unable to get image ${url} with your PAT at ${apiTokenPath}`);
+		return undefined;
+	}
+}
+
+let globalStoragePath : string;
+async function downloadImages(fields: any) : Promise<void> {
+
+	// Ensure the global storage path exists
+	if (!fs.existsSync(globalStoragePath)) {
+		fs.mkdirSync(globalStoragePath, { recursive: true });
+	}
+
+	for (const attachment of fields.attachment as any ) {
+		const filename = attachment.filename as string;
+		if (filename.startsWith('image-')) {
+			const imageURL = attachment.thumbnail as string;
+			const imagePath = path.join(globalStoragePath,filename);
+			if (fs.existsSync(imagePath))
+				continue;
+			const response = await getImage(imageURL);
+			if (!response)
+				return;
+			fs.writeFileSync(imagePath, response);
+		}
+	}
+}
+
 async function fetchIssueDetails(key: string): Promise<any> {
 	const baseUrl = getConfigProperty('url');
 	if (key == 'ISSUE-1234') {
@@ -95,7 +140,7 @@ async function fetchIssueDetails(key: string): Promise<any> {
 
 function parseIssueDetails(key: string, fields: any): string {
 	if (key == "ISSUE-1234" ) {
-		return `ISSUE-1234 | Status | Issue title/summary ( Owner )`
+		return `ISSUE-1234 | Status | Summary ( Assignee )`
 	}
 	if (fields === undefined) {
 		throw new Error(`Can't find issue ${key}. (Check your PAT, the URL or your issue number)`)
@@ -103,16 +148,39 @@ function parseIssueDetails(key: string, fields: any): string {
 
 	let msg = `${key} |`;
 
-	if (fields.status !== undefined && fields.status.name as string)
+	if (fields.status && fields.status.name as string)
 		msg += ` ${fields.status.name} |`;
 
 	if (fields.summary as string)
 		msg += ` ${fields.summary}`;
 
-	if (fields.assignee !== undefined && fields.assignee.displayName as string)
+	if (fields.assignee && fields.assignee.displayName as string)
 		msg += ` ( ${fields.assignee.displayName} )`;
 
 	return msg;
+}
+
+function changeImageURL(fields: any) : any {
+	let imageDict: { [name: string]: string } = {};
+	for (const attachment of fields.attachment as any ) {
+		// if attachment.filename starts with 'image-', then
+		const filename = attachment.filename as string;
+		if (filename.startsWith('image-')) {
+			// add attachments.thumbnail to the dictionnary
+			imageDict[filename] = filename;
+		}
+	}
+
+	// if fields.description contains !some-text|option!, then
+	fields.description = fields.description.replace(/!(.*)\|(.*)!/g, (match:string, filename: string) => {
+		// if some-text is dictionary key, then
+		if (imageDict[filename]) {
+			// replace some-text by the dictionary value associated with the some-text
+			return `!file://${path.join(globalStoragePath,imageDict[filename])}!`;
+		}
+		return `!${match}!`;
+	});
+	return fields;
 }
 
 function getTooltip(label:string, fields: any): vscode.MarkdownString {
@@ -135,7 +203,9 @@ It can span several lines, contains [url](https://some.where)
 		const nattach = (fields.attachment as Array<any>).length;
 		mdString.appendMarkdown(`__${ncomments} comments, ${nattach} attachments__\n\n`);
 		mdString.appendMarkdown('---\n\n');
-		mdString.appendMarkdown(j2m.to_markdown(fields.description));
+		fields = changeImageURL(fields);
+		const markdown = j2m.to_markdown(fields.description);
+		mdString.appendMarkdown(markdown);
 	}
 
 	mdString.isTrusted = true;
@@ -181,6 +251,7 @@ async function changeIssue() {
 			baseUrl = await changeUrl();
 		}
 		const fields = await fetchIssueDetails(issue);
+		await downloadImages(fields);
 		await setStatusBar(issue,baseUrl,fields);
 	}
 }
@@ -200,8 +271,16 @@ async function changeUrl(): Promise<string> {
 	return baseUrl;
 }
 
+async function removeImagesInGlobalStorage() {
+	// Currently only images are saved, so lets remove the whole
+	if (!fs.existsSync(globalStoragePath)) {
+		return;
+	}
+	fs.rmSync(globalStoragePath,{ recursive: true, force: true });
+}
+
 export function activate(context: vscode.ExtensionContext) {
-	console.log('Congratulations, your extension extensionName is now active!');
+	console.log('Congratulations, your extension jira-quick-info is now active!');
 
 	// Adding commands
 	context.subscriptions.push(
@@ -210,6 +289,10 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(extensionName+'.openIssueInBrowser',openIssueInBrowser)
 	);
+	context.subscriptions.push(
+		vscode.commands.registerCommand(extensionName+'.removeThumbnails',removeImagesInGlobalStorage)
+	);
+	globalStoragePath = context.globalStorageUri.fsPath;
 
 	// Verify we got the API token
 	apiToken = getApiToken();
@@ -240,10 +323,13 @@ export function activate(context: vscode.ExtensionContext) {
 		const url = baseUrl as string;
 		
 		fetchIssueDetails(issue).then( (fields) => {
+			downloadImages(fields).then(() => {});
 			setStatusBar(issue,url,fields).then(() => {});
 		});
 	}
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+	removeImagesInGlobalStorage().then(()=>{});
+}
