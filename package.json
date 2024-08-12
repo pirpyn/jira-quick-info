@@ -2,7 +2,7 @@
 	"name": "jira-quick-info",
 	"displayName": "JIRA Quick Info",
 	"description": "Get JIRA's summary, status and owner in the status bar",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"icon": "logo.png",
 	"publisher": "pierre-payen",
 	"author": {
@@ -39,27 +39,31 @@
 		"configuration": {
 			"title": "jira-quick-info",
 			"properties": {
-				"jira-quick-info.url": {
-					"type": "string",
-					"scope": "resource",
-					"default": "https://change.me/jira",
-					"description": "the base URL where your instance of JIRA is"
-				},
 				"jira-quick-info.issue": {
 					"type": "string",
-					"scope": "window",
+					"scope": "resource",
 					"default": "",
 					"description": "the JIRA issue to show"
 				},
+				"jira-quick-info.url": {
+					"type": "string",
+					"scope": "application",
+					"default": "https://change.me/jira",
+					"description": "the base URL where your instance of JIRA is"
+				},
 				"jira-quick-info.tokenPath": {
 					"type": "string",
-					"scope": "machine-overridable",
+					"scope": "application",
 					"default": "/path/to/token",
 					"description": "a path to a file containing a personnal access token (PAT) to authenticate"
 				}
 			}
 		}
 	},
+	"extensionKind": [
+		"ui",
+		"workspace"
+	],
 	"scripts": {
 		"compile": "npm run check-types && node esbuild.js",
 		"check-types": "tsc --noEmit",

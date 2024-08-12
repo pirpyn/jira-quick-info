@@ -8,10 +8,14 @@ import axios from 'axios';
 // @ts-ignore
 import * as j2m from 'jira2md';
 
+// The extension name to set and get configuration properties
 const extensionName = 'jira-quick-info';
-
+// The status bar to update
 let myStatusBarItem: vscode.StatusBarItem;
+// the PAT to authenticate to jira
 let apiToken: string;
+// A custom "output" to log info to
+let log: any;
 
 function setConfigProperty(property: string, value: string, scope: vscode.ConfigurationTarget): void {
 	// If VSCode hasn't opened a workspace, default to global setting
@@ -57,9 +61,11 @@ function getApiToken(): string {
 		return apiToken;
 
 	const apiTokenPath = path.resolve(getConfigProperty('tokenPath'));
+	log.appendLine(`Jira PAT at ${apiTokenPath}`);
 	if (apiTokenPath) {
 		if (fs.existsSync(apiTokenPath)) {
 			apiToken = fs.readFileSync(apiTokenPath, 'utf8').trim();
+			log.appendLine(`PAT ${apiToken}`);
 			return apiToken;
 		} else {
 			vscode.window.showErrorMessage(`Can't read PAT at ${apiTokenPath}`);
@@ -105,6 +111,7 @@ async function downloadImages(fields: any) : Promise<void> {
 			const imagePath = path.join(globalStoragePath,filename);
 			if (fs.existsSync(imagePath))
 				continue;
+			log.appendLine(`saving ${imageURL} at ${imagePath}`);
 			const response = await getImage(imageURL);
 			if (!response)
 				return;
@@ -130,7 +137,8 @@ async function fetchIssueDetails(key: string): Promise<any> {
 			vscode.window.showErrorMessage(`Got error ${response.status} for issue ${key}`);
 			return undefined;
 		}
-		return response.data.fields;
+		const fields = changeImageURL(response.data.fields);
+		return fields;
 	} catch (error) {
 		const apiTokenPath = path.resolve(getConfigProperty('tokenPath'));
 		vscode.window.showErrorMessage(`Unable to authenticate to ${baseUrl} with your PAT at ${apiTokenPath}`);
@@ -172,11 +180,11 @@ function changeImageURL(fields: any) : any {
 	}
 
 	// if fields.description contains !some-text|option!, then
-	fields.description = fields.description.replace(/!(.*)\|(.*)!/g, (match:string, filename: string) => {
+	fields.description = fields.description.replace(/!([^|]+)(\|(?:.*))?!/g, (match:string, filename: string) => {
 		// if some-text is dictionary key, then
 		if (imageDict[filename]) {
 			// replace some-text by the dictionary value associated with the some-text
-			return `!file://${path.join(globalStoragePath,imageDict[filename])}!`;
+			return `!vscode-file://vscode-app/${path.join(globalStoragePath,imageDict[filename])}!`;
 		}
 		return `!${match}!`;
 	});
@@ -203,11 +211,9 @@ It can span several lines, contains [url](https://some.where)
 		const nattach = (fields.attachment as Array<any>).length;
 		mdString.appendMarkdown(`__${ncomments} comments, ${nattach} attachments__\n\n`);
 		mdString.appendMarkdown('---\n\n');
-		fields = changeImageURL(fields);
 		const markdown = j2m.to_markdown(fields.description);
 		mdString.appendMarkdown(markdown);
 	}
-
 	mdString.isTrusted = true;
 	return mdString;
 }
@@ -245,7 +251,7 @@ async function changeIssue() {
 	if (!issue) {
 		vscode.window.showErrorMessage('No issue provided.');
 	} else {
-		setConfigProperty('issue', issue, vscode.ConfigurationTarget.WorkspaceFolder);
+		setConfigProperty('issue', issue, vscode.ConfigurationTarget.Workspace);
 		let baseUrl = getConfigProperty('url');
 		if (!baseUrl) {
 			baseUrl = await changeUrl();
@@ -271,16 +277,20 @@ async function changeUrl(): Promise<string> {
 	return baseUrl;
 }
 
-async function removeImagesInGlobalStorage() {
-	// Currently only images are saved, so lets remove the whole
+function removeImagesInGlobalStorage() {
+	// Currently only images are saved, so lets remove all files
 	if (!fs.existsSync(globalStoragePath)) {
 		return;
 	}
-	fs.rmSync(globalStoragePath,{ recursive: true, force: true });
+	fs.readdirSync(globalStoragePath).forEach(file => {
+		fs.rmSync(file);
+	});
 }
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('Congratulations, your extension jira-quick-info is now active!');
+
+	log = vscode.window.createOutputChannel(extensionName);
+	console.log(`Congratulations, your extension ${extensionName} is now active!`);
 
 	// Adding commands
 	context.subscriptions.push(
@@ -292,6 +302,15 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(extensionName+'.removeThumbnails',removeImagesInGlobalStorage)
 	);
+
+	// reload apiToken when option is changed
+	vscode.workspace.onDidChangeConfiguration(event => {
+		const affected = event.affectsConfiguration(extensionName+".tokenPath");
+		if (affected) {
+			apiToken = getApiToken();
+		}
+	})
+
 	globalStoragePath = context.globalStorageUri.fsPath;
 
 	// Verify we got the API token
@@ -308,13 +327,15 @@ export function activate(context: vscode.ExtensionContext) {
 	let baseUrl = getConfigProperty('url');
 	let label = getConfigProperty('issue');
 
-	// Issue default is current workspace basename
+	// Issue name is by default the current workspace basename
 	if (!label) {
+		let dirPath = "" ;
 		if (vscode.workspace.workspaceFile) {
-			label = path.dirname(vscode.workspace.workspaceFile.fsPath);
+			dirPath = vscode.workspace.workspaceFile.fsPath;
 		} else if (vscode.workspace.workspaceFolders) {
-			label = path.basename(vscode.workspace.workspaceFolders[0].uri.fsPath);
+			dirPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
 		}
+		label = path.basename(path.dirname(dirPath));
 	}
 
 	if (baseUrl && label)
@@ -331,5 +352,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-	removeImagesInGlobalStorage().then(()=>{});
+	removeImagesInGlobalStorage();
 }

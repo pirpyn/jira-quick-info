@@ -15,6 +15,8 @@ Look for more information in your Jira's profile.
 
 # Changelog
 
-## [0.0.3] 2024-08-07
-- Download thumbnail to render them in the tooltip
-- Added a command to erase the thumbnails from the disk
+## [0.0.4] 2024-08-12
+- Change extension kind to "ui" to download images next to the tooltip renderer
+- Reload PAT on change of the corresponding option
+- Added a new "Output" log tag, to print list of downloaded images and their location on disk
+- Fix default issue name from the Workspace folder basename
