@@ -15,8 +15,6 @@ Look for more information in your Jira's profile.
 
 # Changelog
 
-## [0.0.4] 2024-08-12
-- Change extension kind to "ui" to download images next to the tooltip renderer
-- Reload PAT on change of the corresponding option
-- Added a new "Output" log tag, to print list of downloaded images and their location on disk
-- Fix default issue name from the Workspace folder basename
+## [0.0.5] 2025-03-04
+- Update axios dependency for security reason
+- Update esbuild dependency for security reason

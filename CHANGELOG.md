@@ -3,6 +3,10 @@ All notable changes to the "jira-quick-info" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.0.5] 2025-03-04
+- Update axios dependency for security reason
+- Update esbuild dependency for security reason
+
 ## [0.0.4] 2024-08-12
 - Change extension kind to "ui" to download images next to the tooltip renderer
 - Reload PAT on change of the corresponding option
