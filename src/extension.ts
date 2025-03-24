@@ -104,6 +104,9 @@ async function downloadImages(fields: any) : Promise<void> {
 		fs.mkdirSync(globalStoragePath, { recursive: true });
 	}
 
+	if (!fields)
+		return;
+
 	for (const attachment of fields.attachment as any ) {
 		const filename = attachment.filename as string;
 		if (filename.startsWith('image-')) {
@@ -141,7 +144,6 @@ async function fetchIssueDetails(key: string): Promise<any> {
 		return fields;
 	} catch (error) {
 		const apiTokenPath = path.resolve(getConfigProperty('tokenPath'));
-		vscode.window.showErrorMessage(`Unable to authenticate to ${baseUrl} with your PAT at ${apiTokenPath}`);
 		return undefined;
 	}
 }
@@ -236,6 +238,7 @@ async function setStatusBar(label:string, baseUrl: string, fields: any): Promise
 		};
 	} catch (error) {
 		myStatusBarItem.text = (<Error>error).message;
+		myStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
 	}
 
 	myStatusBarItem.show();
