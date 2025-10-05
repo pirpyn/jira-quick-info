@@ -2,7 +2,7 @@ on:
   push:
     tags:
       - "*"
-name: Deploy Extension
+name: Deploy Extension VSX
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,9 +17,3 @@ jobs:
         id: publishToOVSX
         with:
           pat: ${{ secrets.OVSX_TOKEN }}
-      - name: Publish to Visual Studio Marketplace
-        uses: HaaLeo/publish-vscode-extension@v1
-        with:
-          pat: ${{ secrets.VSCE_TOKEN }}
-          extensionFile: ${{ steps.publishToOVSX.outputs.vsixPath }}
-          registryUrl: https://marketplace.visualstudio.com
