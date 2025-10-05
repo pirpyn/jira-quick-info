@@ -15,6 +15,5 @@ Look for more information in your Jira's profile.
 
 # Changelog
 
-## [0.0.5] 2025-03-04
+## [0.0.6] 2025-10-05
 - Update axios dependency for security reason
-- Update esbuild dependency for security reason
