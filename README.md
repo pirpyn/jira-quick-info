@@ -15,5 +15,8 @@ Look for more information in your Jira's profile.
 
 # Changelog
 
+## [0.1.1] 2026-02-11
+- hotfix to set paths as machine scope and made path exact
+
 ## [0.1.0] 2026-02-11
 - Added paths where we shouldn't by default activate the extension, unless label is set manually

@@ -2,7 +2,7 @@
 	"name": "jira-quick-info",
 	"displayName": "JIRA Quick Info",
 	"description": "Get JIRA's summary, status and owner in the status bar",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"icon": "logo.png",
 	"publisher": "pierre-payen",
 	"author": {
@@ -88,7 +88,7 @@
 		"package": "npm run check-types && node esbuild.js --production"
 	},
 	"dependencies": {
-		"axios": "^1.12.2",
+		"axios": "^1.13.5",
 		"jira2md": "^3.0.1",
 		"typescript": "^5.5.3"
 	},
