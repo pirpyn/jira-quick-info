@@ -17,7 +17,7 @@ let apiToken: string;
 // A custom "output" to log info to
 let log: any;
 
-function setConfigProperty(property: string, value: string, scope: vscode.ConfigurationTarget): void {
+function setConfigProperty(property: string , value: string | string[], scope: vscode.ConfigurationTarget): void {
 	// If VSCode hasn't opened a workspace, default to global setting
 	try {
 		vscode.workspace.getConfiguration(extensionName).update(property, value, scope);
@@ -290,6 +290,22 @@ function removeImagesInGlobalStorage() {
 	});
 }
 
+function setPaths() {
+	vscode.window.showInputBox({
+		prompt: "Please set the paths where the extension should be active. Separate multiple paths with a comma.",
+		placeHolder: "/home,/workspace",
+		ignoreFocusOut: true
+	}).then((input) => {
+		if (!input) {
+			vscode.window.showErrorMessage('No paths provided.');
+			return;
+		}
+		const paths = input.split(',').map(p => p.trim());
+		setConfigProperty('paths', paths, vscode.ConfigurationTarget.Global);
+		vscode.window.showInformationMessage(`Paths set to ${paths}`);
+	});
+}
+
 export function activate(context: vscode.ExtensionContext) {
 
 	log = vscode.window.createOutputChannel(extensionName);
@@ -305,7 +321,12 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(extensionName+'.removeThumbnails',removeImagesInGlobalStorage)
 	);
-
+	context.subscriptions.push(
+		vscode.commands.registerCommand(extensionName+'.changeUrl',changeUrl)
+	);
+	context.subscriptions.push(
+		vscode.commands.registerCommand(extensionName+'.setPaths',setPaths)
+	);
 	// reload apiToken when option is changed
 	vscode.workspace.onDidChangeConfiguration(event => {
 		const affected = event.affectsConfiguration(extensionName+".tokenPath");
@@ -329,7 +350,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// Init the extension if label & url are already set
 	let baseUrl = getConfigProperty('url');
 	let label = getConfigProperty('issue');
-
+	
 	// Issue name is by default the current workspace basename
 	if (!label) {
 		let dirPath = "" ;
@@ -337,6 +358,20 @@ export function activate(context: vscode.ExtensionContext) {
 			dirPath = vscode.workspace.workspaceFile.fsPath;
 		} else if (vscode.workspace.workspaceFolders) {
 			dirPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+		}
+		let paths = getConfigProperty('paths');
+		if (paths) {
+			log.appendLine(`Checking if current path ${dirPath} is in the list of paths ${paths}`);
+			paths = JSON.parse(paths);
+			if (!Array.isArray(paths)) {
+				vscode.window.showErrorMessage('Paths should be an array of strings.');
+			} else {
+				const isInPath = paths.some((p: string) => dirPath.startsWith(p));
+				if (!isInPath) {
+					log.appendLine(`Current path ${dirPath} is not in the list of paths ${paths}, extension will be inactive`);
+					return;
+				}
+			}
 		}
 		label = path.basename(path.dirname(dirPath));
 	}

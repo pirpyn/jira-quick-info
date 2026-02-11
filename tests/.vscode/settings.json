@@ -1,5 +1,6 @@
 {
 	"jira-quick-info.url" : "https://change.me/jira",
 	"jira-quick-info.issue" : "ISSUE-1234",
-	"jira-quick-info.tokenPath" : "jira-quick-info/tests/fakeToken"
+	"jira-quick-info.tokenPath" : "jira-quick-info/tests/fakeToken",
+	"jira-quick-info.paths": ["/home", "/workspace"]
 }

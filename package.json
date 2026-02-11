@@ -34,6 +34,14 @@
 			{
 				"command": "jira-quick-info.removeThumbnails",
 				"title": "Jira Quick Info: removes all thumbnails downloaded for the tooltip"
+			},
+			{
+				"command": "jira-quick-info.openIssueInBrowser",
+				"title": "Jira Quick Info: Open current selected issue in your browser"
+			},
+			{
+				"command": "jira-quick-info.setPaths",
+				"title": "Jira Quick Info: Set paths where the extension should be active"
 			}
 		],
 		"configuration": {
@@ -56,6 +64,12 @@
 					"scope": "application",
 					"default": "/path/to/token",
 					"description": "a path to a file containing a personnal access token (PAT) to authenticate"
+				},
+				"jira-quick-info.paths": {
+					"type": "array",
+					"scope": "application",
+					"default": ["/home", "/workspace" ],
+					"description": "An array on path in wich the extension should be active. If the current opened file is in one of those paths, the extension will be active and show the JIRA info in the status bar"
 				}
 			}
 		}
