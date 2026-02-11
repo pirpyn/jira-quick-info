@@ -3,6 +3,9 @@ All notable changes to the "jira-quick-info" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.1.0] 2026-02-11
+- Added paths where we shouldn't by default activate the extension, unless label is set manually
+
 ## [0.0.6] 2025-10-05
 - Update axios dependency for security reason
 

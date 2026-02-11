@@ -15,5 +15,5 @@ Look for more information in your Jira's profile.
 
 # Changelog
 
-## [0.0.6] 2025-10-05
-- Update axios dependency for security reason
+## [0.1.0] 2026-02-11
+- Added paths where we shouldn't by default activate the extension, unless label is set manually
