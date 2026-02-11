@@ -26,30 +26,33 @@ function setConfigProperty(property: string , value: string | string[], scope: v
 	}
 }
 
-function getConfigProperty(property: string): string {
+function getConfigProperty(property: string): string | string[] {
 	// Not sure that this isn't already VSCode default behavior for getConfiguration
 	const configName = extensionName;
-	let value: string | undefined;
+	let value: string | string[] | undefined;
 
 	// 1. Attempt to retrieve from the any workspace folder's configuration
 	const workspaceFolders = vscode.workspace.workspaceFolders;
 	if (workspaceFolders && workspaceFolders.length > 0) {
 		for (const folder of workspaceFolders) {
 			value = vscode.workspace.getConfiguration(configName, folder).get(property);
-			if (value)
-				return value as string;
+			if (value !== undefined) {
+				return value;
+			}
 		}
 	}
 
 	// 2. Attempt to retrieve from the workspace configuration
 	value = vscode.workspace.getConfiguration(configName, null).get(property);
-	if (value)
-		return value as string;
+	if (value !== undefined) {
+		return value;
+	}
 
 	// 3. Attempt to retrieve from the global configuration
 	value = vscode.workspace.getConfiguration(configName).get(property);
-	if (value)
-		return value as string;
+	if (value !== undefined) {
+		return value;
+	}
 
 	// If not found in any scope, return an empty string or a default value
 	return '';
@@ -60,7 +63,7 @@ function getApiToken(): string {
 	if (apiToken)
 		return apiToken;
 
-	const apiTokenPath = path.resolve(getConfigProperty('tokenPath'));
+	const apiTokenPath = path.resolve(getConfigProperty('tokenPath') as string);
 	log.appendLine(`Jira PAT at ${apiTokenPath}`);
 	if (apiTokenPath) {
 		if (fs.existsSync(apiTokenPath)) {
@@ -90,7 +93,7 @@ async function getImage(url: string): Promise<any> {
 		}
 		return response.data;
 	} catch (error) {
-		const apiTokenPath = path.resolve(getConfigProperty('tokenPath'));
+		const apiTokenPath = path.resolve(getConfigProperty('tokenPath') as string);
 		vscode.window.showErrorMessage(`Unable to get image ${url} with your PAT at ${apiTokenPath}`);
 		return undefined;
 	}
@@ -129,6 +132,7 @@ async function fetchIssueDetails(key: string): Promise<any> {
 		return undefined;
 	}
 	try {
+		log.appendLine(`Fetching issue ${baseUrl}/rest/api/2/issue/${key}`)
 		const agent = new https.Agent({
 			rejectUnauthorized: false
 		});
@@ -140,10 +144,14 @@ async function fetchIssueDetails(key: string): Promise<any> {
 			vscode.window.showErrorMessage(`Got error ${response.status} for issue ${key}`);
 			return undefined;
 		}
+		else
+		{
+			log.appendLine(`Got response ${response.status} for issue ${key}`);
+		}
 		const fields = changeImageURL(response.data.fields);
 		return fields;
 	} catch (error) {
-		const apiTokenPath = path.resolve(getConfigProperty('tokenPath'));
+		const apiTokenPath = path.resolve(getConfigProperty('tokenPath') as string);
 		return undefined;
 	}
 }
@@ -255,7 +263,7 @@ async function changeIssue() {
 		vscode.window.showErrorMessage('No issue provided.');
 	} else {
 		setConfigProperty('issue', issue, vscode.ConfigurationTarget.Workspace);
-		let baseUrl = getConfigProperty('url');
+		let baseUrl = getConfigProperty('url') as string;
 		if (!baseUrl) {
 			baseUrl = await changeUrl();
 		}
@@ -297,11 +305,11 @@ function setPaths() {
 		ignoreFocusOut: true
 	}).then((input) => {
 		if (!input) {
-			vscode.window.showErrorMessage('No paths provided.');
+			setConfigProperty('paths',[], vscode.ConfigurationTarget.Workspace);
 			return;
 		}
 		const paths = input.split(',').map(p => p.trim());
-		setConfigProperty('paths', paths, vscode.ConfigurationTarget.Global);
+		setConfigProperty('paths', paths, vscode.ConfigurationTarget.Workspace);
 		vscode.window.showInformationMessage(`Paths set to ${paths}`);
 	});
 }
@@ -356,24 +364,25 @@ export function activate(context: vscode.ExtensionContext) {
 		let dirPath = "" ;
 		if (vscode.workspace.workspaceFile) {
 			dirPath = vscode.workspace.workspaceFile.fsPath;
+			label = path.basename(path.dirname(dirPath));
 		} else if (vscode.workspace.workspaceFolders) {
 			dirPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+			label = path.basename(dirPath);
 		}
-		let paths = getConfigProperty('paths');
+		let paths = getConfigProperty('paths') as string[];
 		if (paths) {
 			log.appendLine(`Checking if current path ${dirPath} is in the list of paths ${paths}`);
-			paths = JSON.parse(paths);
 			if (!Array.isArray(paths)) {
 				vscode.window.showErrorMessage('Paths should be an array of strings.');
 			} else {
-				const isInPath = paths.some((p: string) => dirPath.startsWith(p));
+				const isInPath = paths.some((p: string) => { return (path.dirname(dirPath) == p) || (dirPath == p) });
 				if (!isInPath) {
 					log.appendLine(`Current path ${dirPath} is not in the list of paths ${paths}, extension will be inactive`);
 					return;
 				}
+				log.appendLine(`Current path ${dirPath} is in the list of paths ${paths}, extension will be active`);
 			}
 		}
-		label = path.basename(path.dirname(dirPath));
 	}
 
 	if (baseUrl && label)

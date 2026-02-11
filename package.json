@@ -55,19 +55,19 @@
 				},
 				"jira-quick-info.url": {
 					"type": "string",
-					"scope": "application",
+					"scope": "machine",
 					"default": "https://change.me/jira",
 					"description": "the base URL where your instance of JIRA is"
 				},
 				"jira-quick-info.tokenPath": {
 					"type": "string",
-					"scope": "application",
+					"scope": "machine",
 					"default": "/path/to/token",
 					"description": "a path to a file containing a personnal access token (PAT) to authenticate"
 				},
 				"jira-quick-info.paths": {
 					"type": "array",
-					"scope": "application",
+					"scope": "machine-overridable",
 					"default": ["/home", "/workspace" ],
 					"description": "An array on path in wich the extension should be active. If the current opened file is in one of those paths, the extension will be active and show the JIRA info in the status bar"
 				}
