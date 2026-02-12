@@ -3,6 +3,9 @@ All notable changes to the "jira-quick-info" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.1.2] 2026-02-12
+- take correct parent and convert \ to / in paths
+
 ## [0.1.1] 2026-02-11
 - hotfix to set paths as machine scope and made path exact
 
