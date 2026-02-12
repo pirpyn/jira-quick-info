@@ -362,12 +362,19 @@ export function activate(context: vscode.ExtensionContext) {
 	// Issue name is by default the current workspace basename
 	if (!label) {
 		let dirPath = "" ;
+		let parentPath = "";
 		if (vscode.workspace.workspaceFile) {
 			dirPath = vscode.workspace.workspaceFile.fsPath;
 			label = path.basename(path.dirname(dirPath));
+			// dirpath is likely /foo/bar/baz/vscode.code-workspace
+			// get parent /foo/bar
+			parentPath = path.dirname(path.dirname(dirPath));
 		} else if (vscode.workspace.workspaceFolders) {
+			// dirpath is likely /foo/bar/baz
+			// get parent /foo/bar
 			dirPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
 			label = path.basename(dirPath);
+			parentPath = path.dirname(dirPath);
 		}
 		let paths = getConfigProperty('paths') as string[];
 		if (paths) {
@@ -375,7 +382,17 @@ export function activate(context: vscode.ExtensionContext) {
 			if (!Array.isArray(paths)) {
 				vscode.window.showErrorMessage('Paths should be an array of strings.');
 			} else {
-				const isInPath = paths.some((p: string) => { return (path.dirname(dirPath) == p) || (dirPath == p) });
+				parentPath = parentPath.replace(/\\/g, '/');
+				// paths contains /foo/bar
+				// ok if dirpath is /foo/bar/baz/vscode.code-workspace
+				const isInPath = paths.some(
+					(p: string) => {
+						// replace all backslashes by forward slashes in p
+						p = p.replace(/\\/g, '/');
+						log.appendLine(`Checking ${parentPath} vs ${p} ${parentPath == p}`);
+						return parentPath == p;
+					}
+				);
 				if (!isInPath) {
 					log.appendLine(`Current path ${dirPath} is not in the list of paths ${paths}, extension will be inactive`);
 					return;
