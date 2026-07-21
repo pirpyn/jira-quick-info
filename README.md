@@ -28,5 +28,7 @@ Theses commands are linked with 4 settings with different scopes:
 
 # Changelog
 
-## [0.1.2] 2026-02-12
-- take correct parent and convert \ to / in paths
+See [CHANGELOG.md](CHANGELOG.md) for full changelog.
+
+## [0.1.7] 2026-07-21
+- Automate dependabot to create minor version on dependency change. Last 5 minors where skipped.

@@ -2,12 +2,9 @@ name: Dependabot auto-update
 
 on:
   pull_request_target:
-    types: [opened, reopened, synchronize]
+    types: [closed]
     branches:
       - main
-    paths:
-      - package.json
-      - package-lock.json
 
 permissions:
   contents: write
@@ -15,17 +12,16 @@ permissions:
 
 jobs:
   release-dependency-update:
-    if: github.actor == 'dependabot[bot]'
+    if: github.event.pull_request.merged == true && github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout pull request branch
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -36,13 +32,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Refresh lockfile
-        run: npm install --package-lock-only
-
-      - name: Bump minor version
+      - name: Bump minor version on merge
         run: |
-          npm version minor --no-git-tag-version
-          echo "NEW_VERSION=$(node -p \"require('./package.json').version\")" >> "$GITHUB_ENV"
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+          NEW_MINOR=$((MINOR + 1))
+          NEW_VERSION="${MAJOR}.${NEW_MINOR}.0"
+          npm version "$NEW_VERSION" --no-git-tag-version
+          echo "NEW_VERSION=$NEW_VERSION" >> "$GITHUB_ENV"
+          echo "TAG_NAME=v$NEW_VERSION" >> "$GITHUB_ENV"
 
       - name: Update changelog and README
         env:
@@ -75,6 +73,8 @@ jobs:
           PY
 
       - name: Commit and publish release tag
+        env:
+          TAG_NAME: ${{ env.TAG_NAME }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -83,7 +83,7 @@ jobs:
             echo "No changes to commit."
             exit 0
           fi
-          git commit -m "chore: release v$NEW_VERSION"
-          git tag "v$NEW_VERSION"
-          git push origin HEAD
-          git push origin "v$NEW_VERSION"
+          git commit -m "chore: release $TAG_NAME"
+          git tag "$TAG_NAME"
+          git push origin HEAD:main
+          git push origin "$TAG_NAME"
