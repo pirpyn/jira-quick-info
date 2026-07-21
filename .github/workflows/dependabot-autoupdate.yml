@@ -1,0 +1,89 @@
+name: Dependabot auto-update
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+    branches:
+      - main
+    paths:
+      - package.json
+      - package-lock.json
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-dependency-update:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout pull request branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh lockfile
+        run: npm install --package-lock-only
+
+      - name: Bump minor version
+        run: |
+          npm version minor --no-git-tag-version
+          echo "NEW_VERSION=$(node -p \"require('./package.json').version\")" >> "$GITHUB_ENV"
+
+      - name: Update changelog and README
+        env:
+          NEW_VERSION: ${{ env.NEW_VERSION }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from datetime import date
+          from pathlib import Path
+
+          version = os.environ["NEW_VERSION"]
+          today = date.today().strftime("%Y-%m-%d")
+
+          changelog_path = Path("CHANGELOG.md")
+          changelog_text = changelog_path.read_text(encoding="utf-8")
+          if f"## [{version}]" not in changelog_text:
+              entry = f"## [{version}] {today}\n- Update dependencies through Dependabot automation.\n\n"
+              changelog_path.write_text(entry + changelog_text, encoding="utf-8")
+
+          readme_path = Path("README.md")
+          readme_text = readme_path.read_text(encoding="utf-8")
+          note = "> Dependency updates are maintained automatically and included in each minor release."
+          if note not in readme_text:
+              marker = "## Changelog\n"
+              if marker in readme_text:
+                  replacement = f"## Changelog\n\n{note}\n\n"
+                  readme_path.write_text(readme_text.replace(marker, replacement, 1), encoding="utf-8")
+              else:
+                  readme_path.write_text(readme_text + f"\n\n{note}\n", encoding="utf-8")
+          PY
+
+      - name: Commit and publish release tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json CHANGELOG.md README.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: release v$NEW_VERSION"
+          git tag "v$NEW_VERSION"
+          git push origin HEAD
+          git push origin "v$NEW_VERSION"
