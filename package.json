@@ -88,7 +88,7 @@
 		"package": "npm run check-types && node esbuild.js --production"
 	},
 	"dependencies": {
-		"axios": "^1.18.1",
+		"axios": "^1.19.0",
 		"jira2md": "^3.0.1"
 	},
 	"devDependencies": {
