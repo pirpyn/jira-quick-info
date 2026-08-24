@@ -3,6 +3,10 @@ All notable changes to the "jira-quick-info" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.2.0] 2026-08-24
+* Move to CLOUD version of jira : email/PAT needed. Expecting output in adf format
+* Added settings for email
+
 ## [0.1.7] 2026-07-21
 - Automate dependabot to create minor version on dependency change. Last 5 minors where skipped.
 

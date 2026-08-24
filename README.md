@@ -10,7 +10,7 @@ Clicking on it will open the issue webpage.
 ![Example Image](example.png)
 
 ## Requirement
-You'll need to set up a Personnal Access Token to authenticate to Jira.
+You'll need to set up a Personnal Access Token and the email address of your Atlassian account to authenticate to Jira.
 Look for more information in your Jira's profile.
 
 # Options & Commands
@@ -23,6 +23,7 @@ The extension provides 4 commands:
 Theses commands are linked with 4 settings with different scopes:
 * [Workspace] Issue: the jira you want to fetch
 * [Machine] Token path: the path to your PAT to authenticate
+* [Machine] Account email: the email address of your Atlassian account
 * [Machine] Url: base url of your jira instance
 * [Machine] Paths: Whitelist of paths where extension must be active with the default label.
 
@@ -30,5 +31,6 @@ Theses commands are linked with 4 settings with different scopes:
 
 See [CHANGELOG.md](CHANGELOG.md) for full changelog.
 
-## [0.1.7] 2026-07-21
-- Automate dependabot to create minor version on dependency change. Last 5 minors where skipped.
+## [0.2.0] 2026-08-24
+* Move to CLOUD version of jira : email/PAT needed. Expecting output in adf format
+* Added settings for email

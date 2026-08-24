@@ -77,6 +77,12 @@ function getApiToken(): string {
 	return '';
 }
 
+function getBasicAuthHeader(): string {
+	const accountEmail = getConfigProperty('accountEmail') as string;
+	const credentials = Buffer.from(`${accountEmail}:${apiToken}`, 'utf8').toString('base64');
+	return `Basic ${credentials}`;
+}
+
 async function getImage(url: string): Promise<any> {
 	try {
 		const agent = new https.Agent({
@@ -84,7 +90,7 @@ async function getImage(url: string): Promise<any> {
 		});
 		const response = await axios.get(url, {
 			httpsAgent: agent,
-			headers: { 'Authorization': `Bearer ${apiToken}` },
+			headers: { 'Authorization': getBasicAuthHeader() },
 			responseType: 'arraybuffer'
 		});
 		if (response.status !== 200) {
@@ -132,13 +138,13 @@ async function fetchIssueDetails(key: string): Promise<any> {
 		return undefined;
 	}
 	try {
-		log.appendLine(`Fetching issue ${baseUrl}/rest/api/2/issue/${key}`)
+		log.appendLine(`Fetching issue ${baseUrl}/rest/api/3/issue/${key}`)
 		const agent = new https.Agent({
 			rejectUnauthorized: false
 		});
-		const response = await axios.get(`${baseUrl}/rest/api/2/issue/${key}`, {
+		const response = await axios.get(`${baseUrl}/rest/api/3/issue/${key}`, {
 			httpsAgent: agent,
-			headers: { 'Authorization': `Bearer ${apiToken}` }
+			headers: { 'Authorization': getBasicAuthHeader() }
 		});
 		if (response.status !== 200) {
 			vscode.window.showErrorMessage(`Got error ${response.status} for issue ${key}`);
@@ -178,24 +184,60 @@ function parseIssueDetails(key: string, fields: any): string {
 	return msg;
 }
 
+function adfToMarkdown(node: any): string {
+	if (Array.isArray(node))
+		return node.map(adfToMarkdown).join('');
+	if (!node || typeof node !== 'object')
+		return '';
+
+	const content = adfToMarkdown(node.content);
+	switch (node.type) {
+		case 'text': {
+			let text = node.text as string || '';
+			if (node.marks?.some((mark: any) => mark.type === 'strong')) text = `**${text}**`;
+			if (node.marks?.some((mark: any) => mark.type === 'em')) text = `*${text}*`;
+			const link = node.marks?.find((mark: any) => mark.type === 'link')?.attrs?.href;
+			return link ? `[${text}](${link})` : text;
+		}
+		case 'hardBreak':
+			return '\n';
+		case 'paragraph':
+			return `${content}\n\n`;
+		case 'heading':
+			return `${'#'.repeat(node.attrs?.level || 1)} ${content.trim()}\n\n`;
+		case 'bulletList':
+			return `${content}\n`;
+		case 'orderedList':
+			return `${content}\n`;
+		case 'listItem':
+			return `* ${content.trim()}\n`;
+		case 'blockquote':
+			return content.split('\n').filter(Boolean).map((line: string) => `> ${line}`).join('\n') + '\n\n';
+		case 'codeBlock':
+			return `\`\`\`\n${content.trim()}\n\`\`\`\n\n`;
+		case 'rule':
+			return '---\n\n';
+		case 'inlineCard':
+			return node.attrs?.url ? `[${node.attrs.url}](${node.attrs.url})` : '';
+		default:
+			return content;
+	}
+}
+
 function changeImageURL(fields: any) : any {
 	let imageDict: { [name: string]: string } = {};
-	for (const attachment of fields.attachment as any ) {
-		// if attachment.filename starts with 'image-', then
+	for (const attachment of (fields.attachment || []) as any ) {
 		const filename = attachment.filename as string;
-		if (filename.startsWith('image-')) {
-			// add attachments.thumbnail to the dictionnary
+		if (filename.startsWith('image-'))
 			imageDict[filename] = filename;
-		}
 	}
 
-	// if fields.description contains !some-text|option!, then
-	fields.description = fields.description.replace(/!([^|]+)(\|(?:.*))?!/g, (match:string, filename: string) => {
-		// if some-text is dictionary key, then
-		if (imageDict[filename]) {
-			// replace some-text by the dictionary value associated with the some-text
+	const description = typeof fields.description === 'string'
+		? fields.description
+		: adfToMarkdown(fields.description);
+	fields.description = description.replace(/!([^|]+)(\|(?:.*))?!/g, (match:string, filename: string) => {
+		if (imageDict[filename])
 			return `!vscode-file://vscode-app/${path.join(globalStoragePath,imageDict[filename])}!`;
-		}
 		return `!${match}!`;
 	});
 	return fields;
@@ -317,6 +359,7 @@ function setPaths() {
 export function activate(context: vscode.ExtensionContext) {
 
 	log = vscode.window.createOutputChannel(extensionName);
+	context.subscriptions.push(log);
 	console.log(`Congratulations, your extension ${extensionName} is now active!`);
 
 	// Adding commands
@@ -336,12 +379,12 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(extensionName+'.setPaths',setPaths)
 	);
 	// reload apiToken when option is changed
-	vscode.workspace.onDidChangeConfiguration(event => {
+	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
 		const affected = event.affectsConfiguration(extensionName+".tokenPath");
 		if (affected) {
 			apiToken = getApiToken();
 		}
-	})
+	}));
 
 	globalStoragePath = context.globalStorageUri.fsPath;
 
@@ -353,6 +396,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	if (myStatusBarItem == undefined) {
 		myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
+		context.subscriptions.push(myStatusBarItem);
 	}
 	
 	// Init the extension if label & url are already set

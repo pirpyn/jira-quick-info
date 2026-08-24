@@ -2,7 +2,7 @@
 	"name": "jira-quick-info",
 	"displayName": "JIRA Quick Info",
 	"description": "Get JIRA's summary, status and owner in the status bar",
-	"version": "0.1.8",
+	"version": "0.2.0",
 	"icon": "logo.png",
 	"publisher": "pierre-payen",
 	"author": {
@@ -64,6 +64,12 @@
 					"scope": "machine",
 					"default": "/path/to/token",
 					"description": "a path to a file containing a personnal access token (PAT) to authenticate"
+				},
+				"jira-quick-info.accountEmail": {
+					"type": "string",
+					"scope": "machine",
+					"default": "atlassian_account@provider.com",
+					"description": "the Atlassian account email used with the API token"
 				},
 				"jira-quick-info.paths": {
 					"type": "array",
