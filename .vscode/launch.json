@@ -11,12 +11,15 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--disable-extension",
+				"--disable-extensions",
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				"-d","${workspaceFolder}/tests"
 			],
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
+			],
+			"problemMatcher": [
+				"$tsc"
 			],
 			"preLaunchTask": "${defaultBuildTask}"
 		}

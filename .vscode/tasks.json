@@ -14,6 +14,13 @@
 			"group": {
 				"kind": "build",
 				"isDefault": true
+			},
+			"options": {
+				// login shell needed so fnm (~/.bash_profile) puts node/npm on PATH
+				"shell": {
+					"executable": "/bin/bash",
+					"args": ["-l", "-c"]
+				}
 			}
 		}
 	]
