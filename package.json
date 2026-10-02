@@ -42,6 +42,10 @@
 			{
 				"command": "jira-quick-info.setPaths",
 				"title": "Jira Quick Info: Set paths where the extension should be active"
+			},
+			{
+				"command": "jira-quick-info.setTokenPath",
+				"title": "Jira Quick Info: Set token path"
 			}
 		],
 		"configuration": {

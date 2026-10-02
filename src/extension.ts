@@ -17,6 +17,11 @@ let apiToken: string;
 // A custom "output" to log info to
 let log: any;
 
+function getTokenPath(): string {
+	const configured = (getConfigProperty('tokenPath') as string || '').trim();
+	return configured ? path.resolve(configured) : '';
+}
+
 function setConfigProperty(property: string , value: string | string[], scope: vscode.ConfigurationTarget): void {
 	// If VSCode hasn't opened a workspace, default to global setting
 	try {
@@ -63,7 +68,7 @@ function getApiToken(): string {
 	if (apiToken)
 		return apiToken;
 
-	const apiTokenPath = path.resolve(getConfigProperty('tokenPath') as string);
+	const apiTokenPath = getTokenPath();
 	log.appendLine(`Jira PAT at ${apiTokenPath}`);
 	if (apiTokenPath) {
 		if (fs.existsSync(apiTokenPath)) {
@@ -99,7 +104,7 @@ async function getImage(url: string): Promise<any> {
 		}
 		return response.data;
 	} catch (error) {
-		const apiTokenPath = path.resolve(getConfigProperty('tokenPath') as string);
+		const apiTokenPath = getTokenPath();
 		vscode.window.showErrorMessage(`Unable to get image ${url} with your PAT at ${apiTokenPath}`);
 		return undefined;
 	}
@@ -157,7 +162,7 @@ async function fetchIssueDetails(key: string): Promise<any> {
 		const fields = changeImageURL(response.data.fields);
 		return fields;
 	} catch (error) {
-		const apiTokenPath = path.resolve(getConfigProperty('tokenPath') as string);
+		const apiTokenPath = getTokenPath();
 		return undefined;
 	}
 }
@@ -356,6 +361,28 @@ function setPaths() {
 	});
 }
 
+function setTokenPath() {
+	const current = (getConfigProperty('tokenPath') as string || '').trim();
+	vscode.window.showInputBox({
+		prompt: "Set the token path to your Jira API token file.",
+		placeHolder: "/home/user/.config/jira/token",
+		value: current,
+		ignoreFocusOut: true
+	}).then((input) => {
+		if (input === undefined) {
+			return;
+		}
+		const tokenPath = input.trim();
+		if (!tokenPath) {
+			vscode.window.showErrorMessage('No token path provided.');
+			return;
+		}
+		setConfigProperty('tokenPath', tokenPath, vscode.ConfigurationTarget.Global);
+		apiToken = '';
+		vscode.window.showInformationMessage(`Token path set to ${path.resolve(tokenPath)}`);
+	});
+}
+
 export function activate(context: vscode.ExtensionContext) {
 
 	log = vscode.window.createOutputChannel(extensionName);
@@ -378,10 +405,14 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(extensionName+'.setPaths',setPaths)
 	);
+	context.subscriptions.push(
+		vscode.commands.registerCommand(extensionName+'.setTokenPath',setTokenPath)
+	);
 	// reload apiToken when option is changed
 	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
 		const affected = event.affectsConfiguration(extensionName+".tokenPath");
 		if (affected) {
+			apiToken = '';
 			apiToken = getApiToken();
 		}
 	}));
