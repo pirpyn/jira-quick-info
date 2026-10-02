@@ -3,6 +3,9 @@ All notable changes to the "jira-quick-info" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.2.1] 2026-10-02
+* new command to set token path
+
 ## [0.2.0] 2026-08-24
 * Move to CLOUD version of jira : email/PAT needed. Expecting output in adf format
 * Added settings for email

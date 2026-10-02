@@ -32,6 +32,5 @@ Theses commands are linked with 4 settings with different scopes:
 
 See [CHANGELOG.md](CHANGELOG.md) for full changelog.
 
-## [0.2.0] 2026-08-24
-* Move to CLOUD version of jira : email/PAT needed. Expecting output in adf format
-* Added settings for email
+## [0.2.1] 2026-10-02
+* new command to set token path
