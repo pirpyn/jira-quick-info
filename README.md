@@ -14,9 +14,10 @@ You'll need to set up a Personnal Access Token and the email address of your Atl
 Look for more information in your Jira's profile.
 
 # Options & Commands
-The extension provides 4 commands:
+The extension provides 5 commands:
 * Change issue: change the issue label to use. By default, this is the current workspace Folder.
 * Set paths: when default label is used, sets a list of path where this extension is active.
+* Set token path: set where your Jira API token file is located.
 * Open in browser: call your default browser to view the current selected issue.
 * Removes all thumbnails images: delete all images thumbnails downloaded in your vscode app folder for previewing.
 

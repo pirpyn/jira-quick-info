@@ -13,7 +13,7 @@ jobs:
           node-version: 24
       - run: npm ci
       - name: Publish to Open VSX Registry
-        uses: HaaLeo/publish-vscode-extension@v1
+        uses: HaaLeo/publish-vscode-extension@v2
         id: publishToOVSX
         with:
           pat: ${{ secrets.OVSX_TOKEN }}
