@@ -3,6 +3,10 @@ All notable changes to the "jira-quick-info" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+
+## [0.2.1] 2026-10-05
+* redraw status bar on command execution
+
 ## [0.2.1] 2026-10-02
 * new command to set token path
 

@@ -32,5 +32,5 @@ Theses commands are linked with 4 settings with different scopes:
 
 See [CHANGELOG.md](CHANGELOG.md) for full changelog.
 
-## [0.2.1] 2026-10-02
-* new command to set token path
+## [0.2.1] 2026-10-05
+* redraw status bar on command execution

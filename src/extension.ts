@@ -341,7 +341,7 @@ function removeImagesInGlobalStorage() {
 		return;
 	}
 	fs.readdirSync(globalStoragePath).forEach(file => {
-		fs.rmSync(file);
+		fs.rmSync(path.join(globalStoragePath, file), { force: true });
 	});
 }
 

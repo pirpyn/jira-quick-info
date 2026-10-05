@@ -2,7 +2,7 @@
 	"name": "jira-quick-info",
 	"displayName": "JIRA Quick Info",
 	"description": "Get JIRA's summary, status and owner in the status bar",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"icon": "logo.png",
 	"publisher": "pierre-payen",
 	"author": {
@@ -19,7 +19,12 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onStartupFinished"
+		"onStartupFinished",
+		"onCommand:jira-quick-info.changeIssue",
+		"onCommand:jira-quick-info.removeThumbnails",
+		"onCommand:jira-quick-info.openIssueInBrowser",
+		"onCommand:jira-quick-info.setPaths",
+		"onCommand:jira-quick-info.setTokenPath"
 	],
 	"keywords": [
 		"jira"
